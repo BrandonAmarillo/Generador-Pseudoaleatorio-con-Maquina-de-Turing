@@ -37,13 +37,23 @@ class TapePanel extends JPanel {
     private static final int CELL_SPACING = 2;
     
     public TapePanel() {
-        setPreferredSize(new Dimension(800, 100));
         setBackground(Color.LIGHT_GRAY);
     }
     
     public void setTape(TuringTape tape) {
         this.tape = tape;
+        updateSize();
         repaint();
+    }
+
+    private void updateSize(){
+        if (tape != null) {
+            int numCells = tape.getCells().size();
+            int width = 20 + numCells * (CELL_SIZE + CELL_SPACING);
+            int height = 100;
+            setPreferredSize(new Dimension(width, height));
+            revalidate(); // Importante: notifica al ScrollPane que el tamaño cambió
+        }
     }
     
     @Override
@@ -257,6 +267,11 @@ public class TuringGUI extends JFrame{
         
         // Actualizar cinta visual
         tapePanel.setTape(machine.getTape());
+
+        int headPos = machine.getTape().getHeadPosition();
+        int cellWidth = 42;
+        int scrollX = headPos * cellWidth - 200;
+        if(scrollX < 0) scrollX = 0;
         
         // Actualizar estado
         stateLabel.setText("Estado: " + machine.getCurrentState());
