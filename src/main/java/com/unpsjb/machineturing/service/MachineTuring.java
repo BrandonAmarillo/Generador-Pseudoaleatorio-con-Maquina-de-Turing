@@ -52,6 +52,7 @@ public class MachineTuring {
         
         this.state = State.INIT;
         this.counter = 0;
+        this.phaseCounter = 0;
         this.currentIteration = 0;
         this.cycleDetected = false;
         
