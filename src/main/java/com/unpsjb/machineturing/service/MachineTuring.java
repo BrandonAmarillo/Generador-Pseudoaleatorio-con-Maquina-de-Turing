@@ -374,8 +374,13 @@ public class MachineTuring {
                     generatedValues.add(newValue);
                     executionLog.add("x" + currentIteration + " = " + newValue + " (nuevo)");
                     executionLog.add("");
-                    currentIteration++;
-                    state = State.INIT;
+                    
+                    // COPIAR el resultado final para siguiente iteración
+                    writePos = tape.findNextBlank(readPos1 + bitLength) + 1;
+                    counter = 0;
+                    state = State.COPY_READ; // Reutilizar la copia existente
+                    phaseStep = 0; // Reiniciar fase
+                    currentIteration++; // Incrementar iteración
                 }
                 return true;
                 
