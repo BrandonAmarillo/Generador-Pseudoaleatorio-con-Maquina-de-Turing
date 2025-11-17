@@ -2,6 +2,7 @@ package com.unpsjb.machineturing.model;
 
 import java.awt.Color;
 
+//Representación de celda de la cinta
 public class TapeCell {
     private char symbol;
     private boolean isHead;

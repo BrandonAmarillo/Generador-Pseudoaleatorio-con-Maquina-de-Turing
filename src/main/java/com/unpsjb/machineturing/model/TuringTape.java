@@ -9,7 +9,6 @@ import java.awt.Color;
  * Clase que representa la cinta
  */
 public class TuringTape {
-    
     private List<TapeCell> cells;
     private int headPosition;
     private static final char BLANK = '▲';
@@ -23,7 +22,7 @@ public class TuringTape {
         }
         
         // Agregar blancos al final
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 100; i++) {
             cells.add(new TapeCell(BLANK));
         }
         
@@ -97,7 +96,7 @@ public class TuringTape {
         StringBuilder sb = new StringBuilder();
         for (int i = start; i < start + length && i < cells.size(); i++) {
             char c = cells.get(i).getSymbol();
-            if (c != BLANK) {
+            if (c != BLANK && c != '#') {
                 sb.append(c);
             }
         }

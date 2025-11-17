@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -52,7 +53,7 @@ class TapePanel extends JPanel {
             int width = 20 + numCells * (CELL_SIZE + CELL_SPACING);
             int height = 100;
             setPreferredSize(new Dimension(width, height));
-            revalidate(); // Importante: notifica al ScrollPane que el tamaño cambió
+            revalidate();
         }
     }
     
@@ -69,10 +70,7 @@ class TapePanel extends JPanel {
         int startX = 10;
         int y = 30;
         
-        // Mostrar solo las primeras 60 celdas
-        int maxCells = Math.min(60, cells.size());
-        
-        for (int i = 0; i < maxCells; i++) {
+        for (int i = 0; i < cells.size(); i++) {
             TapeCell cell = cells.get(i);
             int x = startX + i * (CELL_SIZE + CELL_SPACING);
             
@@ -97,7 +95,7 @@ class TapePanel extends JPanel {
     }
 }
 
-
+// Interfaz gráfica
 public class TuringGUI extends JFrame{
    private MachineTuring machine;
    private TapePanel tapePanel;
@@ -129,11 +127,11 @@ public class TuringGUI extends JFrame{
         configPanel.add(aField);
         
         configPanel.add(new JLabel("Parámetro b (shift right):"));
-        bField = new JTextField("3");
+        bField = new JTextField("2");
         configPanel.add(bField);
         
         configPanel.add(new JLabel("Parámetro c (shift left):"));
-        cField = new JTextField("2");
+        cField = new JTextField("1");
         configPanel.add(cField);
         
         JButton initButton = new JButton("Inicializar Máquina");
@@ -273,6 +271,9 @@ public class TuringGUI extends JFrame{
         int scrollX = headPos * cellWidth - 200;
         if(scrollX < 0) scrollX = 0;
         
+        JScrollPane scrollPane = (JScrollPane) tapePanel.getParent().getParent();
+        JScrollBar horizontal = scrollPane.getHorizontalScrollBar();
+        horizontal.setValue(scrollX);
         // Actualizar estado
         stateLabel.setText("Estado: " + machine.getCurrentState());
         
