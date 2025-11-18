@@ -79,10 +79,13 @@ public class MachineTuring {
                     }
                 }
                 
-                writePos = tape.findNextBlank(readPos1 + bitLength) + 1;
+                copySourcePos = readPos1;
+                
+                copyTargetPos = tape.findNextBlank(readPos1 + bitLength) + 1;
                 counter = 0;
                 phaseStep = 0;
-                state = State.COPY_READ;
+                executionLog.add("Copia inicial con marcadores");
+                state = State.PRE_SHIFT_COPY_MARK;
                 return true;
                 
             case COPY_READ:
@@ -204,20 +207,34 @@ public class MachineTuring {
                     counter++;
                     return true;
                 } else {
-                    // Todos los bits restaurados, ahora preparar shift
+                    // Todos los bits restaurados
                     String copiedForShift = tape.readSection(copyTargetPos, bitLength);
-                    executionLog.add("Copia pre-shift completa: " + copiedForShift);
                     
-                    readPos1 = copySourcePos; // La segunda posición (la que vamos a shiftear)
-                    readPos2 = copyTargetPos; // La tercera posición (para comparar en XOR)
-                    
-                    // Determinar qué shift hacer según la fase
-                    if (phaseStep == 1) {
-                        prepareShift(a, true, "x << " + a);
-                    } else if (phaseStep == 2) {
-                        prepareShift(b, false, "x >> " + b);
-                    } else if (phaseStep == 3) {
-                        prepareShift(c, true, "x << " + c);
+                    if (phaseStep == 0) {
+                        // Copia inicial completa, ahora copiar con marcadores para shift A
+                        executionLog.add("Copia inicial: " + copiedForShift);
+                        readPos1 = copyTargetPos; // Segunda posición (la que vamos a shiftear)
+                        copySourcePos = copyTargetPos;
+                        copyTargetPos = tape.findNextBlank(copyTargetPos + bitLength) + 1;
+                        counter = 0;
+                        phaseStep = 1;
+                        executionLog.add("Preparando copia para shift A");
+                        state = State.PRE_SHIFT_COPY_MARK;
+                    } else {
+                        // Copia pre-shift completa
+                        executionLog.add("Copia pre-shift completa: " + copiedForShift);
+                        
+                        readPos1 = copySourcePos; // La segunda posición (la que vamos a shiftear)
+                        readPos2 = copyTargetPos; // La tercera posición (para comparar en XOR)
+                        
+                        // Determinar qué shift hacer según la fase
+                        if (phaseStep == 1) {
+                            prepareShift(a, true, "x << " + a);
+                        } else if (phaseStep == 2) {
+                            prepareShift(b, false, "x >> " + b);
+                        } else if (phaseStep == 3) {
+                            prepareShift(c, true, "x << " + c);
+                        }
                     }
                 }
                 return true;
@@ -376,9 +393,10 @@ public class MachineTuring {
                     executionLog.add("");
                     
                     // COPIAR el resultado final para siguiente iteración
-                    writePos = tape.findNextBlank(readPos1 + bitLength) + 1;
+                    copySourcePos = readPos1;
+                    copyTargetPos = tape.findNextBlank(readPos1 + bitLength) + 1;
                     counter = 0;
-                    state = State.COPY_READ; // Reutilizar la copia existente
+                    state = State.PRE_SHIFT_COPY_MARK; // Reutilizar la copia existente
                     phaseStep = 0; // Reiniciar fase
                     currentIteration++; // Incrementar iteración
                 }
@@ -406,15 +424,19 @@ public class MachineTuring {
         String xorResult = tape.readSection(xorStartPos, bitLength);
         
         if (phaseStep == 1) {
+            // Terminó x XOR (x << a), preparar para x >> b
             executionLog.add("x XOR (x << a) = " + xorResult);
             
+            // El resultado está en xorStartPos (segunda posición)
+            // Ahora necesitamos copiar con marcadores para x >> b
             copySourcePos = xorStartPos;
             copyTargetPos = tape.findNextBlank(xorStartPos + bitLength) + 1;
             counter = 0;
             phaseStep = 2;
             state = State.PRE_SHIFT_COPY_MARK;
-
+            
         } else if (phaseStep == 2) {
+            // Terminó x XOR (x >> b), preparar para x << c
             executionLog.add("x XOR (x >> b) = " + xorResult);
             
             copySourcePos = xorStartPos;
@@ -422,9 +444,9 @@ public class MachineTuring {
             counter = 0;
             phaseStep = 3;
             state = State.PRE_SHIFT_COPY_MARK;
-
+            
         } else if (phaseStep == 3) {
-            // Termina x XOR (x << c) - RESULTADO FINAL
+            // Terminó x XOR (x << c) - RESULTADO FINAL
             executionLog.add("x XOR (x << c) = " + xorResult + " (RESULTADO FINAL)");
             
             readPos1 = xorStartPos;
