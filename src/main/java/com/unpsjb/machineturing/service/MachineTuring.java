@@ -17,6 +17,7 @@ public class MachineTuring {
     private boolean cycleDetected;
     private String currentState;
     private List<String> executionLog;
+    private int stepCount;
 
     private State state;
     private char tempChar;
@@ -51,17 +52,22 @@ public class MachineTuring {
         this.currentIteration = 0;
         this.cycleDetected = false;
         this.phaseStep = 0;
+        this.stepCount = 0;
         
         generatedValues.add(seed);
         executionLog.add("x₀ = " + seed);
         currentState = "Inicializado con semilla: " + seed;
    }
 
+   public int getStepCount() {
+        return stepCount;
+    }
+
    public boolean step() {
         if (state == State.HALT) {
             return false;
         }
-        
+        stepCount++;
         tape.clearColors();
         
         switch (state) {
@@ -85,45 +91,10 @@ public class MachineTuring {
                 counter = 0;
                 phaseStep = 0;
                 executionLog.add("Copia inicial con marcadores");
-                state = State.PRE_SHIFT_COPY_MARK;
+                state = State.COPY_READ;
                 return true;
                 
             case COPY_READ:
-                tape.setHeadPosition(readPos1 + counter);
-                tempChar = tape.read();
-                tape.setColorAt(tape.getHeadPosition(), Color.YELLOW);
-                currentState = "Copiando: Leyendo '" + tempChar + "' de pos " + (readPos1 + counter);
-                state = State.COPY_WRITE;
-                return true;
-                
-            case COPY_WRITE:
-                tape.setHeadPosition(writePos + counter);
-                tape.write(tempChar);
-                tape.setColorAt(tape.getHeadPosition(), Color.GREEN);
-                currentState = "Copiando: Escribiendo '" + tempChar + "' en pos " + (writePos + counter);
-                counter++;
-                
-                if (counter < bitLength) {
-                    state = State.COPY_READ;
-                } else {
-                    String copied = tape.readSection(writePos, bitLength);
-                    
-                    if (phaseStep == 0) {
-                        // Copia inicial completa, ahora copiar con marcadores antes de shift A
-                        executionLog.add("Copia inicial: " + copied);
-                        readPos1 = writePos; // Segunda posición (la que vamos a shiftear)
-                        copySourcePos = writePos;
-                        copyTargetPos = tape.findNextBlank(writePos + bitLength) + 1;
-                        counter = 0;
-                        phaseStep = 1;
-                        state = State.PRE_SHIFT_COPY_MARK;
-                    } else {
-                        executionLog.add("ERROR: COPY_WRITE en fase inesperada");
-                    }
-                }
-                return true;
-                
-            case PRE_SHIFT_COPY_MARK:
                 if (counter < bitLength) {
                     tape.setHeadPosition(copySourcePos + counter);
                     markedBit = tape.read();
@@ -138,7 +109,7 @@ public class MachineTuring {
                     
                     tape.write('#');
                     tape.setColorAt(tape.getHeadPosition(), Color.RED);
-                    currentState = "Pre-shift: Marcando bit " + counter + " ('" + markedBit + "') con # en pos " + tape.getHeadPosition();
+                    currentState = "Marcando bit " + counter + " ('" + markedBit + "') con # en pos " + tape.getHeadPosition();
                     blanksSeen = 0; // Reiniciar contador de blancos
                     state = State.PRE_SHIFT_COPY_FIND_TARGET;
                 } else {
@@ -154,13 +125,13 @@ public class MachineTuring {
                 int currentPos = tape.getHeadPosition();
                 int targetWritePos = copyTargetPos + counter;
                 
-                currentState = "Pre-shift: Avanzando hacia pos " + targetWritePos + ", actual: " + currentPos;
+                currentState = "Avanzando hacia pos " + targetWritePos + ", actual: " + currentPos;
                 tape.setColorAt(currentPos, Color.CYAN);
                 
                 if (currentPos >= targetWritePos) {
                     // Llegamos a la posición de escritura
                     tape.setHeadPosition(targetWritePos);
-                    currentState = "Pre-shift: Llegamos a posición de escritura " + targetWritePos;
+                    currentState = "Llegamos a posición de escritura " + targetWritePos;
                     state = State.PRE_SHIFT_COPY_WRITE_BIT;
                 }
                 return true;
@@ -170,7 +141,7 @@ public class MachineTuring {
                 if (tape.read() == '▲') {
                     tape.write(markedBit);
                     tape.setColorAt(tape.getHeadPosition(), Color.GREEN);
-                    currentState = "Pre-shift: Escribiendo '" + markedBit + "' en pos " + tape.getHeadPosition();
+                    currentState = "Escribiendo '" + markedBit + "' en pos " + tape.getHeadPosition();
                     state = State.PRE_SHIFT_COPY_RETURN;
                 } else {
                     executionLog.add("ERROR: No se encontró ▲ para escribir en pos " + tape.getHeadPosition());
@@ -181,16 +152,16 @@ public class MachineTuring {
             case PRE_SHIFT_COPY_RETURN:
                 // Retroceder hasta encontrar #
                 tape.moveLeft();
-                currentState = "Pre-shift: Retrocediendo a # desde pos " + tape.getHeadPosition();
+                currentState = "Retrocediendo a # desde pos " + tape.getHeadPosition();
                 tape.setColorAt(tape.getHeadPosition(), Color.PINK);
                 
                 if (tape.read() == '#') {
                     // Restaurar el valor original
                     tape.write(markedBit);
                     tape.setColorAt(tape.getHeadPosition(), Color.ORANGE);
-                    currentState = "Pre-shift: Restaurando '" + markedBit + "' en pos " + tape.getHeadPosition();
+                    currentState = "Restaurando '" + markedBit + "' en pos " + tape.getHeadPosition();
                     counter++;
-                    state = State.PRE_SHIFT_COPY_MARK;
+                    state = State.COPY_READ;
                 }
                 return true;
                 
@@ -219,10 +190,10 @@ public class MachineTuring {
                         counter = 0;
                         phaseStep = 1;
                         executionLog.add("Preparando copia para shift A");
-                        state = State.PRE_SHIFT_COPY_MARK;
+                        state = State.COPY_READ;
                     } else {
                         // Copia pre-shift completa
-                        executionLog.add("Copia pre-shift completa: " + copiedForShift);
+                        executionLog.add("Copia completa: " + copiedForShift);
                         
                         readPos1 = copySourcePos; // La segunda posición (la que vamos a shiftear)
                         readPos2 = copyTargetPos; // La tercera posición (para comparar en XOR)
@@ -396,7 +367,7 @@ public class MachineTuring {
                     copySourcePos = readPos1;
                     copyTargetPos = tape.findNextBlank(readPos1 + bitLength) + 1;
                     counter = 0;
-                    state = State.PRE_SHIFT_COPY_MARK; // Reutilizar la copia existente
+                    state = State.COPY_READ; // Reutilizar la copia existente
                     phaseStep = 0; // Reiniciar fase
                     currentIteration++; // Incrementar iteración
                 }
@@ -433,7 +404,7 @@ public class MachineTuring {
             copyTargetPos = tape.findNextBlank(xorStartPos + bitLength) + 1;
             counter = 0;
             phaseStep = 2;
-            state = State.PRE_SHIFT_COPY_MARK;
+            state = State.COPY_READ;
             
         } else if (phaseStep == 2) {
             // Terminó x XOR (x >> b), preparar para x << c
@@ -443,7 +414,7 @@ public class MachineTuring {
             copyTargetPos = tape.findNextBlank(xorStartPos + bitLength) + 1;
             counter = 0;
             phaseStep = 3;
-            state = State.PRE_SHIFT_COPY_MARK;
+            state = State.COPY_READ;
             
         } else if (phaseStep == 3) {
             // Terminó x XOR (x << c) - RESULTADO FINAL

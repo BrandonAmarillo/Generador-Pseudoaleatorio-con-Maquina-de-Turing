@@ -101,12 +101,17 @@ public class TuringGUI extends JFrame{
    private TapePanel tapePanel;
    private JTextArea logDisplay;
    private JLabel stateLabel;
+   private JLabel stepCountLabel;
+   private JLabel speedLabel;
    private JButton stepButton;
    private JButton runButton;
    private JButton resetButton;
+   private JButton speedUpButton;
+   private JButton speedDownButton;
    private JTextField seedField;
    private JTextField aField, bField, cField;
    private Timer autoTimer;
+   private int timerDelay = 300; // milisegundos
     
     public TuringGUI() {
         setTitle("Máquina de Turing - Generador XOR-Shift");
@@ -142,11 +147,21 @@ public class TuringGUI extends JFrame{
         
         // Panel central para la cinta
         JPanel centerPanel = new JPanel(new BorderLayout());
+
+        // Panel de información (estado y contador de pasos)
+        JPanel infoPanel = new JPanel(new GridLayout(2,1));
         
         stateLabel = new JLabel("Estado: No inicializado", SwingConstants.CENTER);
         stateLabel.setFont(new Font("Monospaced", Font.BOLD, 14));
-        stateLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        centerPanel.add(stateLabel, BorderLayout.NORTH);
+        stateLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        centerPanel.add(stateLabel);
+
+        stepCountLabel = new JLabel("Pasos ejecutados: 0", SwingConstants.CENTER);
+        stepCountLabel.setFont(new Font("Monospaced", Font.BOLD, 14));
+        stepCountLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        centerPanel.add(stepCountLabel);
+
+        centerPanel.add(infoPanel, BorderLayout.NORTH);
         
         tapePanel = new TapePanel();
         JScrollPane tapeScroll = new JScrollPane(tapePanel);
@@ -180,6 +195,20 @@ public class TuringGUI extends JFrame{
         resetButton.setEnabled(false);
         resetButton.addActionListener(e -> reset());
         controlPanel.add(resetButton);
+
+        speedDownButton = new JButton("- Velocidad");
+        speedDownButton.setEnabled(false);
+        speedDownButton.addActionListener(e -> decreaseSpeed());
+        controlPanel.add(speedDownButton);
+
+        speedUpButton = new JButton("+ Velocidad");
+        speedUpButton.setEnabled(false);
+        speedUpButton.addActionListener(e -> increaseSpeed());
+        controlPanel.add(speedUpButton);
+
+        speedLabel = new JLabel(getSpeedText());
+        speedLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        controlPanel.add(speedLabel);
         
         add(controlPanel, BorderLayout.EAST);
         
@@ -194,6 +223,29 @@ public class TuringGUI extends JFrame{
         
         setLocationRelativeTo(null);
     }
+
+    private String getSpeedText() {
+        if(timerDelay >= 500) return "Lento(" + timerDelay + " ms)";
+        if(timerDelay >= 150) return "Normal(" + timerDelay + " ms)";
+        if(timerDelay >= 50) return "Rápido(" + timerDelay + " ms)";
+        return "Muy Rápido(" + timerDelay + " ms)";
+    }
+
+    private void increaseSpeed(){
+        if (timerDelay > 10) {
+            timerDelay = Math.max(10, timerDelay - 50);
+            autoTimer.setDelay(timerDelay);
+            speedLabel.setText(getSpeedText());   
+        }
+    }
+    private void decreaseSpeed(){
+        if(timerDelay < 1000){
+            timerDelay = Math.min(1000, timerDelay + 50);
+            autoTimer.setDelay(timerDelay);
+            speedLabel.setText(getSpeedText());
+        }
+    }
+
     
     private void initializeMachine() {
         try {
@@ -206,11 +258,22 @@ public class TuringGUI extends JFrame{
                 JOptionPane.showMessageDialog(this, "La semilla debe ser de 6 bits (0s y 1s)");
                 return;
             }
+
+            if(a <=0 || b <=0 || c <=0){
+                JOptionPane.showMessageDialog(this, "Los parámetros a, b, c deben ser mayores a 0");
+                return;
+            }
+            if(a > 4 || b > 4 || c > 4){
+                JOptionPane.showMessageDialog(this, "Los parámetros a, b, c deben ser entre 1 y 4");
+                return;
+            }
             
             machine = new MachineTuring(seed, a, b, c);
             stepButton.setEnabled(true);
             runButton.setEnabled(true);
             resetButton.setEnabled(true);
+            speedUpButton.setEnabled(true);
+            speedDownButton.setEnabled(true);
             
             updateDisplay();
             JOptionPane.showMessageDialog(this, "Máquina inicializada correctamente");
@@ -227,7 +290,8 @@ public class TuringGUI extends JFrame{
         
         if (machine.isCycleDetected()) {
             JOptionPane.showMessageDialog(this, 
-                "¡Ciclo detectado!\nPeríodo: " + machine.getCycleLength() + " valores",
+                "¡Ciclo detectado!\nCiclo: " + machine.getCycleLength() + " valores" + 
+                "\n Pasos: " + machine.getStepCount() + " pasos",
                 "Ciclo Completado", 
                 JOptionPane.INFORMATION_MESSAGE);
             stepButton.setEnabled(false);
@@ -257,7 +321,11 @@ public class TuringGUI extends JFrame{
         stateLabel.setText("Estado: No inicializado");
         stepButton.setEnabled(false);
         runButton.setEnabled(false);
+        speedUpButton.setEnabled(false);
+        speedDownButton.setEnabled(false);
         runButton.setText("Ejecutar Automático");
+        timerDelay = 300;
+        speedLabel.setText(getSpeedText());
     }
     
     private void updateDisplay() {
@@ -276,6 +344,7 @@ public class TuringGUI extends JFrame{
         horizontal.setValue(scrollX);
         // Actualizar estado
         stateLabel.setText("Estado: " + machine.getCurrentState());
+        stepCountLabel.setText("Pasos ejecutados: " + machine.getStepCount());
         
         // Actualizar log
         StringBuilder logStr = new StringBuilder();
