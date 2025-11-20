@@ -292,7 +292,8 @@ public class TuringGUI extends JFrame{
         
         if (machine.isCycleDetected()) {
             JOptionPane.showMessageDialog(this, 
-                "¡Ciclo detectado!\nPerído detectado: " + machine.getCycleLength() + " valores" + 
+                "¡Ciclo detectado!\nPerído detectado: " + machine.getCycleLength() + " valores" +
+                "\nTransiciones: " + machine.getTransitions() +  
                 "\n Pasos: " + machine.getStepCount() + " pasos",
                 "Ciclo Completado", 
                 JOptionPane.INFORMATION_MESSAGE);
