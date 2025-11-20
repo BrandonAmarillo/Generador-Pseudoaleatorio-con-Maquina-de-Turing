@@ -22,7 +22,7 @@ public class TuringTape {
         }
         
         // Agregar blancos al final
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 200; i++) {
             cells.add(new TapeCell(BLANK));
         }
         
@@ -33,8 +33,13 @@ public class TuringTape {
     public void moveRight() {
         if (headPosition < cells.size() - 1) {
             headPosition++;
-            updateHead();
+        } else {
+            for(int i = 0; i < 50; i++){
+                cells.add(new TapeCell(BLANK));
+            }
+            headPosition++;
         }
+        updateHead();
     }
     
     public void moveLeft() {
@@ -84,6 +89,12 @@ public class TuringTape {
     }
     
     public int findNextBlank(int startPos) {
+        while (startPos >= cells.size() - 10) {
+            for (int i = 0; i < 50; i++) {
+                cells.add(new TapeCell(BLANK));
+            }
+        }
+        
         for (int i = startPos; i < cells.size(); i++) {
             if (cells.get(i).getSymbol() == BLANK) {
                 return i;

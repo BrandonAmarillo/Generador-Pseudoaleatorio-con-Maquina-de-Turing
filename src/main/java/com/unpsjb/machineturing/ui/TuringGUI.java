@@ -253,6 +253,8 @@ public class TuringGUI extends JFrame{
             int a = Integer.parseInt(aField.getText().trim());
             int b = Integer.parseInt(bField.getText().trim());
             int c = Integer.parseInt(cField.getText().trim());
+
+            System.out.println("DEBUG: Parámetros recibidos - a=" + a + ", b=" + b + ", c=" + c);
             
             if (!seed.matches("[01]{6}")) {
                 JOptionPane.showMessageDialog(this, "La semilla debe ser de 6 bits (0s y 1s)");
@@ -290,7 +292,7 @@ public class TuringGUI extends JFrame{
         
         if (machine.isCycleDetected()) {
             JOptionPane.showMessageDialog(this, 
-                "¡Ciclo detectado!\nCiclo: " + machine.getCycleLength() + " valores" + 
+                "¡Ciclo detectado!\nPerído detectado: " + machine.getCycleLength() + " valores" + 
                 "\n Pasos: " + machine.getStepCount() + " pasos",
                 "Ciclo Completado", 
                 JOptionPane.INFORMATION_MESSAGE);

@@ -22,7 +22,7 @@ public class MachineTuring {
     private State state;
     private char tempChar;
     private int counter;
-    private int readPos1, readPos2, writePos;
+    private int readPos1, readPos2;
     private int currentIteration;
     private String currentOp;
 
@@ -56,6 +56,7 @@ public class MachineTuring {
         
         generatedValues.add(seed);
         executionLog.add("x₀ = " + seed);
+        executionLog.add("Parámetros: a=" + a + ", b=" + b + ", c=" + c);
         currentState = "Inicializado con semilla: " + seed;
    }
 
@@ -91,10 +92,10 @@ public class MachineTuring {
                 counter = 0;
                 phaseStep = 0;
                 executionLog.add("Copia inicial con marcadores");
-                state = State.COPY_READ;
+                state = State.PRE_SHIFT_COPY_MARK;
                 return true;
                 
-            case COPY_READ:
+            case PRE_SHIFT_COPY_MARK:
                 if (counter < bitLength) {
                     tape.setHeadPosition(copySourcePos + counter);
                     markedBit = tape.read();
@@ -161,7 +162,7 @@ public class MachineTuring {
                     tape.setColorAt(tape.getHeadPosition(), Color.ORANGE);
                     currentState = "Restaurando '" + markedBit + "' en pos " + tape.getHeadPosition();
                     counter++;
-                    state = State.COPY_READ;
+                    state = State.PRE_SHIFT_COPY_MARK;
                 }
                 return true;
                 
@@ -190,7 +191,7 @@ public class MachineTuring {
                         counter = 0;
                         phaseStep = 1;
                         executionLog.add("Preparando copia para shift A");
-                        state = State.COPY_READ;
+                        state = State.PRE_SHIFT_COPY_MARK;
                     } else {
                         // Copia pre-shift completa
                         executionLog.add("Copia completa: " + copiedForShift);
@@ -367,7 +368,7 @@ public class MachineTuring {
                     copySourcePos = readPos1;
                     copyTargetPos = tape.findNextBlank(readPos1 + bitLength) + 1;
                     counter = 0;
-                    state = State.COPY_READ; // Reutilizar la copia existente
+                    state = State.PRE_SHIFT_COPY_MARK; // Reutilizar la copia existente
                     phaseStep = 0; // Reiniciar fase
                     currentIteration++; // Incrementar iteración
                 }
@@ -404,7 +405,7 @@ public class MachineTuring {
             copyTargetPos = tape.findNextBlank(xorStartPos + bitLength) + 1;
             counter = 0;
             phaseStep = 2;
-            state = State.COPY_READ;
+            state = State.PRE_SHIFT_COPY_MARK;
             
         } else if (phaseStep == 2) {
             // Terminó x XOR (x >> b), preparar para x << c
@@ -414,7 +415,7 @@ public class MachineTuring {
             copyTargetPos = tape.findNextBlank(xorStartPos + bitLength) + 1;
             counter = 0;
             phaseStep = 3;
-            state = State.COPY_READ;
+            state = State.PRE_SHIFT_COPY_MARK;
             
         } else if (phaseStep == 3) {
             // Terminó x XOR (x << c) - RESULTADO FINAL
